@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vault &mdash; every credential, synced</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+
+<!-- LOCK SCREEN -->
+<div id="lockScreen" class="lock-screen">
+  <div class="lock-card">
+    <div class="lock-emblem" aria-hidden="true">
+      <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+        <rect x="9" y="18" width="22" height="16" rx="2.5" stroke="currentColor" stroke-width="2"/>
+        <path d="M13 18v-5a7 7 0 0 1 14 0v5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        <circle cx="20" cy="25" r="2.2" fill="currentColor"/>
+        <path d="M20 27v3.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+    </div>
+    <p class="lock-eyebrow" id="lockEyebrow">Welcome back</p>
+    <h1 class="lock-title" id="lockTitle">Sign in to your vault</h1>
+    <p class="lock-copy" id="lockCopy">This password signs you into your cloud vault and encrypts everything in it. Nothing readable ever leaves your browser &mdash; if you forget it, there's no reset, so keep it safe.</p>
+
+    <form id="lockForm" autocomplete="off">
+      <label class="field-label" for="authEmail">Your account email</label>
+      <input type="email" id="authEmail" class="text-input" autocomplete="email" required placeholder="you@example.com">
+
+      <label class="field-label" for="masterInput">Master password</label>
+      <div class="input-wrap">
+        <input type="password" id="masterInput" class="text-input" autocomplete="new-password" required minlength="6">
+        <button type="button" class="input-icon-btn" id="toggleMaster" aria-label="Show password">
+          <svg width="18" height="18" viewBox="0 0 20 20" fill="none"><path d="M1 10s3-6 9-6 9 6 9 6-3 6-9 6-9-6-9-6Z" stroke="currentColor" stroke-width="1.5"/><circle cx="10" cy="10" r="2.5" stroke="currentColor" stroke-width="1.5"/></svg>
+        </button>
+      </div>
+      <div id="confirmWrap" class="field-block hidden">
+        <label class="field-label" for="masterConfirm">Confirm master password</label>
+        <input type="password" id="masterConfirm" class="text-input" autocomplete="new-password">
+      </div>
+      <p class="lock-error" id="lockError"></p>
+      <p class="lock-info hidden" id="lockInfo"></p>
+      <button type="submit" class="btn btn-primary btn-full" id="lockSubmit">Sign in</button>
+      <button type="button" class="btn-text" id="modeToggleBtn">New here? Create an account instead</button>
+    </form>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app" class="app hidden">
+
+  <header class="topbar">
+    <div class="brand">
+      <svg width="22" height="22" viewBox="0 0 40 40" fill="none" class="brand-mark"><rect x="9" y="18" width="22" height="16" rx="2.5" stroke="currentColor" stroke-width="2"/><path d="M13 18v-5a7 7 0 0 1 14 0v5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="20" cy="25" r="2" fill="currentColor"/></svg>
+      <span class="brand-name">Vault</span>
+    </div>
+    <div class="topbar-actions">
+      <span class="sync-status" id="syncStatus">Synced</span>
+      <button class="btn btn-ghost" id="lockBtn">Sign out</button>
+    </div>
+  </header>
+
+  <main class="main">
+
+    <!-- EMAILS -->
+    <section class="emails-section">
+      <div class="section-head">
+        <p class="eyebrow">Your email IDs</p>
+        <h2 class="section-title">Every inbox you sign up with</h2>
+      </div>
+      <div class="emails-grid" id="emailsGrid"></div>
+    </section>
+
+    <!-- CONTROLS -->
+    <section class="controls">
+      <div class="search-wrap">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" class="search-icon"><circle cx="7" cy="7" r="5.2" stroke="currentColor" stroke-width="1.4"/><path d="M11 11l3.5 3.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+        <input type="text" id="searchInput" class="text-input search-input" placeholder="Find anything&hellip;">
+      </div>
+      <select id="categoryFilterSelect" class="text-input filter-select">
+        <option value="all">All categories</option>
+        <option value="app">App / Website</option>
+        <option value="bank">Bank account</option>
+        <option value="api">API key / service</option>
+        <option value="server">Server / database</option>
+        <option value="other">Other</option>
+      </select>
+      <select id="filterSelect" class="text-input filter-select"></select>
+      <button class="btn btn-primary" id="addAccountBtn">+ Add entry</button>
+    </section>
+
+    <!-- KEYRING GRID -->
+    <section class="keyring-section">
+      <div class="section-head">
+        <p class="eyebrow">Everything you've saved</p>
+        <h2 class="section-title">Apps, banks, keys, servers</h2>
+      </div>
+      <div class="keyring" id="keyring"></div>
+      <p class="empty-state hidden" id="emptyState">No entries yet &mdash; add the first app, account, or key.</p>
+    </section>
+  </main>
+</div>
+
+<!-- ACCOUNT MODAL -->
+<div class="modal-overlay hidden" id="accountModalOverlay">
+  <div class="modal" role="dialog" aria-labelledby="modalTitle">
+    <div class="modal-head">
+      <h3 id="modalTitle">Add entry</h3>
+      <button class="modal-close" id="modalClose" aria-label="Close">&times;</button>
+    </div>
+    <form id="accountForm">
+      <input type="hidden" id="accountId">
+
+      <label class="field-label" for="accountCategory">Category</label>
+      <select id="accountCategory" class="text-input">
+        <option value="app">App / Website</option>
+        <option value="bank">Bank account</option>
+        <option value="api">API key / service</option>
+        <option value="server">Server / database</option>
+        <option value="other">Other</option>
+      </select>
+
+      <label class="field-label" for="appName">What's it called</label>
+      <input type="text" id="appName" class="text-input" placeholder="GitHub, Canara Bank, Groq API&hellip;" required>
+
+      <label class="field-label" for="identifier">Username / ID used to log in</label>
+      <input type="text" id="identifier" class="text-input" placeholder="Email, customer ID, username&hellip;">
+
+      <label class="field-label" for="accountEmailSelect">Linked email <span class="optional">optional</span></label>
+      <select id="accountEmailSelect" class="text-input"></select>
+
+      <label class="field-label" for="appPassword">Password / code</label>
+      <div class="input-wrap">
+        <input type="password" id="appPassword" class="text-input" autocomplete="new-password">
+        <button type="button" class="input-icon-btn" id="toggleAppPassword" aria-label="Show password">
+          <svg width="18" height="18" viewBox="0 0 20 20" fill="none"><path d="M1 10s3-6 9-6 9 6 9 6-3 6-9 6-9-6-9-6Z" stroke="currentColor" stroke-width="1.5"/><circle cx="10" cy="10" r="2.5" stroke="currentColor" stroke-width="1.5"/></svg>
+        </button>
+      </div>
+
+      <label class="field-label" for="appRecovery">Recovery info <span class="optional">optional</span></label>
+      <input type="text" id="appRecovery" class="text-input" placeholder="Recovery phone or backup email for this one">
+
+      <label class="field-label" for="appNotes">What it's for <span class="optional">optional</span></label>
+      <textarea id="appNotes" class="text-input textarea" rows="2" placeholder="Repo link, project name, what you use it for&hellip;"></textarea>
+
+      <div class="modal-actions">
+        <button type="button" class="btn-text danger hidden" id="deleteAccountBtn">Delete this entry</button>
+        <div class="modal-actions-right">
+          <button type="button" class="btn btn-ghost" id="cancelAccountBtn">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- EMAIL MODAL -->
+<div class="modal-overlay hidden" id="emailModalOverlay">
+  <div class="modal" role="dialog" aria-labelledby="emailModalTitle">
+    <div class="modal-head">
+      <h3 id="emailModalTitle">Add email</h3>
+      <button class="modal-close" id="emailModalClose" aria-label="Close">&times;</button>
+    </div>
+    <form id="emailForm">
+      <input type="hidden" id="emailId">
+      <label class="field-label" for="emailAddress">Email address</label>
+      <input type="email" id="emailAddress" class="text-input" required>
+
+      <label class="field-label" for="emailPasswordInput">Password</label>
+      <div class="input-wrap">
+        <input type="password" id="emailPasswordInput" class="text-input" autocomplete="new-password">
+        <button type="button" class="input-icon-btn" id="toggleEmailPassword" aria-label="Show password">
+          <svg width="18" height="18" viewBox="0 0 20 20" fill="none"><path d="M1 10s3-6 9-6 9 6 9 6-3 6-9 6-9-6-9-6Z" stroke="currentColor" stroke-width="1.5"/><circle cx="10" cy="10" r="2.5" stroke="currentColor" stroke-width="1.5"/></svg>
+        </button>
+      </div>
+
+      <label class="field-label" for="emailPhone">Recovery phone number</label>
+      <input type="tel" id="emailPhone" class="text-input" placeholder="+91&nbsp;&hellip;">
+
+      <div class="modal-actions">
+        <button type="button" class="btn-text danger hidden" id="deleteEmailBtn">Delete this email</button>
+        <div class="modal-actions-right">
+          <button type="button" class="btn btn-ghost" id="emailCancelBtn">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="assets/js/config.js"></script>
+<script src="assets/js/crypto.js"></script>
+<script src="assets/js/app.js"></script>
+</body>
+</html>
